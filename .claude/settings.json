@@ -1,0 +1,54 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(make *)",
+      "Bash(docker-compose *)",
+      "Bash(docker compose *)",
+      "Bash(python *)",
+      "Bash(pytest *)",
+      "Bash(ruff *)",
+      "Bash(ls *)",
+      "Edit",
+      "Write",
+      "Read",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -n --arg d \"$(date +%Y-%m-%d)\" '{\"systemMessage\": \"Session \\($d) — brightbean-studio (ADR-0006 proposed, not yet adopted). Multi-tenant Django app. No cross-tenant queries. No hardcoded credentials. ACC integration boundary: publisher/composer apps only.\"}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"Before compacting: preserve (1) current branch name and any uncommitted file paths, (2) multi-tenant FK invariants in scope, (3) what was accomplished and what still remains open.\"}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"Turn complete — verify: no cross-tenant queries · no hardcoded credentials · tests pass (pytest) · no PII in diff · if context feels slow, /compact before the next task.\"}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
