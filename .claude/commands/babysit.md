@@ -44,3 +44,6 @@ Canonical spec: `ai-brain/patterns/babysit.md`.
 
 In a web/remote session, subscribing to the PR's activity is the event-driven
 equivalent — CI and review events wake the session instead of polling.
+
+Also available globally via `~/.claude/commands/babysit.md` (symlinked from
+ai-brain by the hourly-sync hook), so `/babysit` works here even without this file.
