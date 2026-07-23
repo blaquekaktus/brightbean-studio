@@ -3,6 +3,7 @@
 import logging
 from datetime import timedelta
 
+from background_task import background
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 
@@ -15,12 +16,25 @@ logger = logging.getLogger(__name__)
 LOOKAHEAD_DAYS = 90
 
 
+@background(schedule=0)
 def generate_recurring_posts():
+    """Recurring daily task: materialise Posts from active RecurrenceRules.
+
+    Registered in ``apps.calendar.apps.CalendarConfig.ready()`` and run by
+    ``python manage.py process_tasks`` — this is the durable publish cadence:
+    it clones each recurring source post forward into scheduled occurrences,
+    which the publish engine then publishes when due.
+    """
+    return _generate_recurring_posts()
+
+
+def _generate_recurring_posts():
     """Generate individual Post records from active RecurrenceRules.
 
-    Runs daily. For each active rule, computes recurrence dates from the
-    source post's scheduled_at up to 90 days ahead. Creates clones of the
-    source post for each date not yet generated.
+    For each active rule, computes recurrence dates from the source post's
+    scheduled_at up to 90 days ahead. Creates clones of the source post for
+    each date not yet generated. Pure of the task layer, so it is directly
+    testable.
     """
     rules = RecurrenceRule.objects.filter(is_active=True).select_related("post")
     now = timezone.now()
