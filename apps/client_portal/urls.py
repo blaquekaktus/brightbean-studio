@@ -14,6 +14,7 @@ urlpatterns = [
     path("published/", views.portal_published, name="published"),
     path("activity/", views.portal_activity, name="activity"),
     path("reports/", views.portal_reports, name="reports"),
+    path("reports/<str:period>/", views.portal_report_detail, name="report_detail"),
     # Magic link entry must be last (catches any token string)
     path("<str:token>/", views.magic_link_entry, name="magic_link_entry"),
 ]

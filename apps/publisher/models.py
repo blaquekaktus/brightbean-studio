@@ -84,3 +84,36 @@ class RateLimitState(models.Model):
         if self.requests_remaining > 0:
             return True
         return not self.is_rate_limited
+
+
+class WorkspaceReport(models.Model):
+    """A stored, rendered white-label publishing report for one workspace month.
+
+    Snapshotted when the monthly scheduler runs so it remains a stable record of
+    what was reported (immune to later data changes) and can be surfaced in the
+    client portal. One row per ``(workspace, period)``.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workspace = models.ForeignKey(
+        "workspaces.Workspace",
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    period = models.CharField(max_length=7, help_text='Reporting month, "YYYY-MM".')
+    html = models.TextField(help_text="Rendered, self-contained white-label report.")
+    total_posts = models.PositiveIntegerField(default=0)
+    total_platform_posts = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "publisher_workspace_report"
+        unique_together = [("workspace", "period")]
+        ordering = ["-period"]
+        indexes = [
+            models.Index(fields=["workspace", "-period"], name="idx_wsreport_ws_period"),
+        ]
+
+    def __str__(self):
+        return f"WorkspaceReport({self.workspace_id}, {self.period})"
