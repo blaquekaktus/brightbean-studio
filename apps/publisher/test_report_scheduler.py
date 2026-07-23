@@ -10,6 +10,7 @@ from apps.composer.models import PlatformPost, Post
 from apps.members.models import WorkspaceMembership
 from apps.notifications.models import EventType, Notification
 from apps.organizations.models import Organization
+from apps.publisher.models import WorkspaceReport
 from apps.publisher.report_scheduler import (
     deliver_workspace_report,
     previous_month,
@@ -98,6 +99,21 @@ class MonthlyReportSchedulerTests(TestCase):
         second = run_monthly_reports(now=self.run_now)
         self.assertEqual(second["notified"], 0)
         self.assertEqual(self._report_notifs(self.owner).count(), 1)
+
+    def test_persists_a_rendered_report_snapshot(self):
+        run_monthly_reports(now=self.run_now)
+        report = WorkspaceReport.objects.get(workspace=self.workspace, period=self.period)
+        self.assertEqual(report.total_posts, 2)
+        self.assertIn("Client A", report.html)
+        self.assertTrue(report.html.startswith("<!DOCTYPE html>"))
+
+    def test_persist_is_idempotent(self):
+        run_monthly_reports(now=self.run_now)
+        run_monthly_reports(now=self.run_now, force=True)
+        self.assertEqual(
+            WorkspaceReport.objects.filter(workspace=self.workspace, period=self.period).count(),
+            1,
+        )
 
     def test_skips_when_not_first_of_month(self):
         not_first = self.run_now.replace(day=15)

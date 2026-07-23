@@ -71,12 +71,27 @@ def deliver_workspace_report(workspace, start, end, period_key: str) -> int:
     """
     from apps.notifications.engine import notify
     from apps.notifications.models import EventType, Notification
+    from apps.publisher.models import WorkspaceReport
+    from apps.publisher.reports import render_report_html
 
     report = build_report_data(workspace, start, end)
     if report["total_posts"] == 0:
         return 0
 
     workspace_id = str(workspace.id)
+
+    # Snapshot the rendered report so it stays a stable record and can be
+    # surfaced (client portal). Idempotent per (workspace, period).
+    WorkspaceReport.objects.update_or_create(
+        workspace=workspace,
+        period=period_key,
+        defaults={
+            "html": render_report_html(report, workspace),
+            "total_posts": report["total_posts"],
+            "total_platform_posts": report["total_platform_posts"],
+        },
+    )
+
     title = f"{workspace.name}: {period_key} publishing report"
     body = f"{report['total_posts']} posts published across {report['total_platform_posts']} platform destinations."
     data = {

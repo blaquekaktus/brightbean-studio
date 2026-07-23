@@ -251,13 +251,29 @@ def portal_activity(request):
 @portal_auth_required
 @require_GET
 def portal_reports(request):
-    """Placeholder reports page."""
+    """List the monthly publishing reports shared with this workspace."""
     workspace = request.portal_workspace
+    reports = workspace.reports.all()
 
     return render(
         request,
         "client_portal/reports.html",
         {
             "workspace": workspace,
+            "reports": reports,
         },
     )
+
+
+@portal_auth_required
+@require_GET
+def portal_report_detail(request, period):
+    """Serve one stored report's rendered HTML, scoped to the session workspace.
+
+    Scoping to ``request.portal_workspace`` is the security boundary — a session
+    can only ever read its own workspace's reports.
+    """
+    from apps.publisher.models import WorkspaceReport
+
+    report = get_object_or_404(WorkspaceReport, workspace=request.portal_workspace, period=period)
+    return HttpResponse(report.html)
